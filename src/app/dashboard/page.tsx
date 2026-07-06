@@ -64,7 +64,7 @@ export default function Dashboard() {
         
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
           <SidebarItem active={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); setShowChat(false); }} label="Dashboard" icon="📊" />
-          <SidebarItem active={activeTab === 'agents'} onClick={() => { setActiveTab('agents'); setShowChat(false); }} label="Agent Gallery" icon="🤖" />
+          <SidebarItem active={activeTab === 'agents'} onClick={() => { setActiveTab('agents'); setShowChat(false); }} label="Agents" icon="🤖" />
           <SidebarItem active={activeTab === 'content'} onClick={() => { setActiveTab('content'); setShowChat(false); }} label="Content" icon="📝" />
           <SidebarItem active={activeTab === 'audit'} onClick={() => { setActiveTab('audit'); setShowChat(false); }} label="Audit Logs" icon="🛡️" />
           <SidebarItem active={activeTab === 'plugins'} onClick={() => { setActiveTab('plugins'); setShowChat(false); }} label="Plugins" icon="🔌" />
@@ -98,7 +98,7 @@ export default function Dashboard() {
         }}>
           <div>
             <h1 style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0, letterSpacing: '-1px' }}>
-              {showChat ? activeAgent.name : (activeTab.charAt(0).toUpperCase() + activeTab.slice(1).replace('agents', 'Agent Gallery'))}
+              {showChat ? activeAgent.name : (activeTab.charAt(0).toUpperCase() + activeTab.slice(1).replace('agents', 'Agents'))}
             </h1>
             <p style={{ color: '#666', marginTop: '0.2rem', fontSize: '0.95rem' }}>
               {showChat ? `Laboratory Session • ${activeAgent.name}` : 'Neural Hook Intelligence OS'}
