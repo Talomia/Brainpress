@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
+import { bp_hooks } from '@/lib/core/hooks';
 
 interface Toast {
   id: string;
@@ -10,12 +11,15 @@ interface Toast {
 
 interface NotificationContextType {
   showToast: (message: string, type?: Toast['type']) => void;
+  activePersona: string;
+  setActivePersona: (name: string) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [activePersona, setActivePersonaState] = useState('Research Scientist');
 
   const showToast = useCallback((message: string, type: Toast['type'] = 'info') => {
     const id = Math.random().toString(36).substring(7);
@@ -25,7 +29,47 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }, 4000);
   }, []);
 
-  const value = useMemo(() => ({ showToast }), [showToast]);
+  const setActivePersona = useCallback((name: string) => {
+    setActivePersonaState(name);
+    
+    // Dynamically update neural hooks based on persona
+    if (name === 'System Architect') {
+      bp_hooks.addHook('pre_process_input', {
+        id: 'persona-interceptor',
+        type: 'filter',
+        priority: 10,
+        callback: (input: string) => `[System Architect Mode] Optimize this architecture inquiry: ${input}`
+      });
+    } else if (name === 'Creative Muse') {
+       bp_hooks.addHook('pre_process_input', {
+        id: 'persona-interceptor',
+        type: 'filter',
+        priority: 10,
+        callback: (input: string) => `[Creative Muse Mode] Imagine and expand upon: ${input}`
+      });
+    } else if (name === 'Zen Master') {
+       bp_hooks.addHook('pre_process_input', {
+        id: 'persona-interceptor',
+        type: 'filter',
+        priority: 10,
+        callback: (input: string) => `[Zen Mode] Simplify to its core essence: ${input}`
+      });
+    } else {
+      // Default: Research Scientist
+      bp_hooks.addHook('pre_process_input', {
+        id: 'persona-interceptor',
+        type: 'filter',
+        priority: 10,
+        callback: (input: string) => `[Research Mode] Analyze rigorously: ${input}`
+      });
+    }
+  }, []);
+
+  const value = useMemo(() => ({ 
+    showToast, 
+    activePersona, 
+    setActivePersona 
+  }), [showToast, activePersona, setActivePersona]);
 
   return (
     <NotificationContext.Provider value={value}>

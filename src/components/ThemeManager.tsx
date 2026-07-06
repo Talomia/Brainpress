@@ -1,13 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { bp_plugins } from '@/lib/core/plugins';
-import { bp_hooks } from '@/lib/core/hooks';
 import { useNotifications } from '@/components/NotificationProvider';
 
 export default function ThemeManager() {
-  const [activePersona, setActivePersona] = useState('Research Scientist');
-  const { showToast } = useNotifications();
+  const { activePersona, setActivePersona, showToast } = useNotifications();
 
   const personas = [
     { id: 'scientist', name: 'Research Scientist', icon: '🧬', description: 'Analytical, formal, and citation-heavy reasoning.' },
@@ -18,7 +15,6 @@ export default function ThemeManager() {
 
   const applyPersona = (persona: any) => {
     setActivePersona(persona.name);
-    // Logic to update the persona-theme plugin or global state
     showToast(`Intelligence persona switched to ${persona.name}`, 'info');
   };
 

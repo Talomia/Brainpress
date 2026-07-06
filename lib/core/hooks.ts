@@ -1,3 +1,5 @@
+import { bp_hooks } from './hooks';
+
 export type HookType = 'action' | 'filter';
 
 export interface BrainpressHook {
@@ -14,8 +16,22 @@ class HookManager {
     if (!this.hooks.has(tag)) {
       this.hooks.set(tag, []);
     }
+    
+    // Prevent duplicate hook IDs
+    const existing = this.hooks.get(tag);
+    if (existing?.some(h => h.id === hook.id)) {
+      this.removeHook(tag, hook.id);
+    }
+
     this.hooks.get(tag)?.push(hook);
     this.hooks.get(tag)?.sort((a, b) => a.priority - b.priority);
+  }
+
+  removeHook(tag: string, hookId: string) {
+    if (this.hooks.has(tag)) {
+      const filtered = this.hooks.get(tag)?.filter(h => h.id !== hookId) || [];
+      this.hooks.set(tag, filtered);
+    }
   }
 
   async doAction(tag: string, ...args: any[]) {
@@ -36,6 +52,10 @@ class HookManager {
       }
     }
     return filteredData;
+  }
+
+  getHooks(tag: string) {
+    return this.hooks.get(tag) || [];
   }
 }
 
