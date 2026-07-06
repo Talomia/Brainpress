@@ -1,22 +1,36 @@
 import { bp_hooks } from '../core/hooks';
 import { Plugin } from '../core/plugins';
+import { bp_supabase } from '../supabase/client';
 
 export const LoggerPlugin: Plugin = {
   id: 'bp-logger',
   name: 'Intelligence Logger',
-  version: '1.0.0',
-  description: 'Logs all intelligence loop activities to the console (and potentially Supabase).',
+  version: '2.0.0',
+  description: 'Synchronizes all intelligence loop activities with Supabase production audit logs.',
   init: () => {
     bp_hooks.addHook('loop_completed', {
-      id: 'log-completion',
+      id: 'production-audit-sync',
       type: 'action',
       priority: 100,
-      callback: (state: any) => {
-        console.log('[Brainpress Log] Loop Completed:', {
-          messageCount: state.messages.length,
-          lastResponse: state.messages[state.messages.length - 1].content.substring(0, 50) + '...',
-          timestamp: new Date().toISOString()
-        });
+      callback: async (state: any) => {
+        const lastMsg = state.messages[state.messages.length - 1];
+        const firstMsg = state.messages[0];
+
+        console.log('[Logger] Synchronizing audit log with Supabase...');
+        
+        try {
+          await bp_supabase.from('bp_loop_logs').insert([{
+            session_id: state.sessionId,
+            context_id: state.contextId,
+            input: firstMsg.content,
+            output: lastMsg.content,
+            steps: state.steps,
+            metadata: state.metadata,
+            created_at: new Date().toISOString()
+          }]);
+        } catch (e) {
+          console.warn('[Logger] Production sync failed:', e);
+        }
       },
     });
 
@@ -25,7 +39,7 @@ export const LoggerPlugin: Plugin = {
       type: 'filter',
       priority: 0,
       callback: (input: string) => {
-        console.log('[Brainpress Log] Input Received:', input);
+        console.log('[BrainPress Log] Input Received:', input);
         return input;
       }
     });
