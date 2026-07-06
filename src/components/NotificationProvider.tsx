@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
-import { bp_hooks } from '@/lib/core/hooks';
+import { createContext, useContext, useState, ReactNode, useCallback, useMemo, useEffect } from 'react';
+import { bp_agents, AgentPersona } from '@/lib/core/agents';
 
 interface Toast {
   id: string;
@@ -11,15 +11,15 @@ interface Toast {
 
 interface NotificationContextType {
   showToast: (message: string, type?: Toast['type']) => void;
-  activePersona: string;
-  setActivePersona: (name: string) => void;
+  activeAgent: AgentPersona;
+  setActiveAgent: (id: string) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [activePersona, setActivePersonaState] = useState('Research Scientist');
+  const [activeAgent, setActiveAgentState] = useState<AgentPersona>(bp_agents.getActiveAgent()!);
 
   const showToast = useCallback((message: string, type: Toast['type'] = 'info') => {
     const id = Math.random().toString(36).substring(7);
@@ -29,47 +29,29 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }, 4000);
   }, []);
 
-  const setActivePersona = useCallback((name: string) => {
-    setActivePersonaState(name);
-    
-    // Dynamically update neural hooks based on persona
-    if (name === 'System Architect') {
-      bp_hooks.addHook('pre_process_input', {
-        id: 'persona-interceptor',
-        type: 'filter',
-        priority: 10,
-        callback: (input: string) => `[System Architect Mode] Optimize this architecture inquiry: ${input}`
-      });
-    } else if (name === 'Creative Muse') {
-       bp_hooks.addHook('pre_process_input', {
-        id: 'persona-interceptor',
-        type: 'filter',
-        priority: 10,
-        callback: (input: string) => `[Creative Muse Mode] Imagine and expand upon: ${input}`
-      });
-    } else if (name === 'Zen Master') {
-       bp_hooks.addHook('pre_process_input', {
-        id: 'persona-interceptor',
-        type: 'filter',
-        priority: 10,
-        callback: (input: string) => `[Zen Mode] Simplify to its core essence: ${input}`
-      });
-    } else {
-      // Default: Research Scientist
-      bp_hooks.addHook('pre_process_input', {
-        id: 'persona-interceptor',
-        type: 'filter',
-        priority: 10,
-        callback: (input: string) => `[Research Mode] Analyze rigorously: ${input}`
-      });
+  const setActiveAgent = useCallback(async (id: string) => {
+    try {
+      await bp_agents.activateAgent(id);
+      const agent = bp_agents.getAgent(id);
+      if (agent) {
+        setActiveAgentState(agent);
+        showToast(`Agent synchronized: ${agent.name}`, 'success');
+      }
+    } catch (e) {
+      showToast('Failed to switch agent persona', 'error');
     }
+  }, [showToast]);
+
+  // Initial activation
+  useEffect(() => {
+    bp_agents.activateAgent('researcher');
   }, []);
 
   const value = useMemo(() => ({ 
     showToast, 
-    activePersona, 
-    setActivePersona 
-  }), [showToast, activePersona, setActivePersona]);
+    activeAgent, 
+    setActiveAgent 
+  }), [showToast, activeAgent, setActiveAgent]);
 
   return (
     <NotificationContext.Provider value={value}>
