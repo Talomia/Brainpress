@@ -5,6 +5,7 @@ import { runIntelligenceLoop } from '@/lib/core/loop';
 import { bp_plugins } from '@/lib/core/plugins';
 import { useNotifications } from './NotificationProvider';
 import { GeminiPlugin } from '@/lib/plugins/gemini-plugin';
+import { OpenAIPlugin } from '@/lib/plugins/openai-plugin';
 import { SearchPlugin } from '@/lib/plugins/search-plugin';
 import { MemoryPlugin } from '@/lib/plugins/memory-plugin';
 import { PersonaTheme } from '@/lib/plugins/persona-theme';
@@ -35,7 +36,7 @@ export default function ChatInterface() {
   useEffect(() => {
     const init = async () => {
       const fullStack = [
-        GeminiPlugin, SearchPlugin, MemoryPlugin, PersonaTheme, 
+        OpenAIPlugin, GeminiPlugin, SearchPlugin, MemoryPlugin, PersonaTheme, 
         GuardrailPlugin, CalculatorPlugin, MultiAgentPlugin, 
         AutoPublisherPlugin, MultiModalPlugin, AnalyticsPlugin, 
         ErrorHandlingPlugin, TranslationPlugin,
