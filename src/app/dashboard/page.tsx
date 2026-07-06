@@ -60,7 +60,7 @@ export default function Dashboard() {
           WebkitBackgroundClip: 'text', 
           WebkitTextFillColor: 'transparent',
           letterSpacing: '-1px'
-        }}>Brainpress</h2>
+        }}>BrainPress</h2>
         
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
           <SidebarItem active={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); setShowChat(false); }} label="Dashboard" icon="📊" />

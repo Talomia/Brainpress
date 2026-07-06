@@ -1,49 +1,39 @@
 import { bp_plugins } from '@/lib/core/plugins';
 import { SearchPlugin } from '@/lib/plugins/search-plugin';
 import { runIntelligenceLoop } from '@/lib/core/loop';
+import Link from 'next/link';
 
 export default async function Home() {
-  // Use a simpler approach for the landing page to prevent server-side timeout/block
-  const greeting = "Brainpress Intelligence OS is live.";
+  const greeting = "BrainPress Intelligence OS is live.";
 
   return (
-    <main className="container">
-      <section className="hero">
-        <h1>Brainpress</h1>
-        <p>Democratizing the development of intelligence. Build, extend, and deploy AI agents with the ease of WordPress.</p>
+    <main className="container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <div className="hero fade-in">
+        <h1>BrainPress</h1>
+        <p>The next-generation autonomous intelligence operating system. Built with neural hooks and contextual reasoning.</p>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-          <a href="/dashboard" className="btn-primary">Go to Dashboard</a>
-          <a href="https://github.com/Talomia/Brainpress" className="btn-primary" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}>Documentation</a>
+          <Link href="/dashboard" className="btn-primary">Go to Dashboard</Link>
+          <a href="https://github.com/Talomia/BrainPress" className="btn-primary" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}>Documentation</a>
         </div>
-      </section>
+      </div>
 
-      <section className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginTop: '4rem' }}>
         <div className="card glass">
-          <h3>The Intelligence Loop</h3>
-          <p>The heart of Brainpress. A hook-driven reasoning engine that can be intercepted and extended.</p>
-          <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '0.9rem', color: '#ccc' }}>
-            <strong>System Status:</strong>
-            <p style={{ marginTop: '0.5rem', fontStyle: 'italic' }}>"{greeting}"</p>
-          </div>
+          <h3>Neural Hooks</h3>
+          <p>The heart of BrainPress. A hook-driven reasoning engine that can be intercepted and extended.</p>
         </div>
-
         <div className="card glass">
-          <h3>Plugin Architecture</h3>
-          <p>Add memory, web search, or custom tools in seconds. Our hook system makes intelligence modular.</p>
-          <ul style={{ marginTop: '1rem', listStyle: 'none', color: '#888' }}>
-            <li style={{ marginBottom: '0.5rem' }}>✅ Ecosystem Hardened</li>
-            <li>✅ Persistent Learning</li>
-          </ul>
+          <h3>Autonomous Loops</h3>
+          <p>Self-correcting intelligence loops that utilize ReAct patterns for complex task execution.</p>
         </div>
-
         <div className="card glass">
-          <h3>Persona Themes</h3>
-          <p>Switch between a helpful assistant, a rigorous researcher, or a creative writer with one click.</p>
+          <h3>Contextual Personas</h3>
+          <p>Switch between different specialized agent personas that dynamically adjust their reasoning style.</p>
         </div>
-      </section>
+      </div>
 
-      <footer style={{ marginTop: '8rem', textAlign: 'center', color: '#444', fontSize: '0.9rem' }}>
-        <p>&copy; 2026 Brainpress Foundation. Built for the future of intelligence.</p>
+      <footer style={{ marginTop: 'auto', padding: '4rem 0', textAlign: 'center', borderTop: '1px solid var(--card-border)', color: '#666' }}>
+        <p>&copy; 2026 BrainPress Foundation. Built for the future of intelligence.</p>
       </footer>
     </main>
   );
