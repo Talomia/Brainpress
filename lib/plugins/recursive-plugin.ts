@@ -11,7 +11,7 @@ export const RecursiveOrchestrationPlugin: Plugin = {
       id: 'recursive-spawn',
       type: 'filter',
       priority: 5,
-      callback: (current: any, { state }: any) => {
+      callback: (current: any, state: any) => {
         const lastMsg = state.messages[state.messages.length - 1];
         if (lastMsg.role === 'user' && lastMsg.content.toLowerCase().includes('complex:')) {
           const task = lastMsg.content.split(/complex:/i)[1].trim();

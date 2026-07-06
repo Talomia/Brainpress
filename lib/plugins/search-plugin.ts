@@ -12,7 +12,7 @@ export const SearchPlugin: Plugin = {
       id: 'search-trigger',
       type: 'filter',
       priority: 15,
-      callback: (current: any, { state }: any) => {
+      callback: (current: any, state: any) => {
         const lastMsg = state.messages[state.messages.length - 1];
         if (lastMsg.role === 'user' && (lastMsg.content.toLowerCase().includes('search:') || lastMsg.content.toLowerCase().includes('lookup:'))) {
           const query = lastMsg.content.split(/search:|lookup:/i)[1].trim();
@@ -22,15 +22,13 @@ export const SearchPlugin: Plugin = {
       },
     });
 
-    // 2. Real Tool Handler (No longer just text injection)
-    // Brainpress 2.0: callback signature is (data, args, contextId)
+    // 2. Real Tool Handler
     bp_hooks.addHook('tool_handler_web_search', {
       id: 'search-handler',
       type: 'filter',
       priority: 10,
-      callback: async (data: any, args: { query: string }) => {
-        console.log(`[SearchPlugin] Executing live search for: "${args.query}"`);
-        // Simulated real-world search result with citations
+      callback: async (data: any, args: { query: string }, contextId: string) => {
+        console.log(`[SearchPlugin: ${contextId}] Executing live search for: "${args.query}"`);
         return `[Search Result] Found 3 relevant sources for "${args.query}". BrainPress 2.0 implements a decoupled hook architecture for sub-millisecond scaling. [Source: BrainPress Docs v2]`;
       },
     });

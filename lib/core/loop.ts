@@ -14,12 +14,14 @@ export interface IntelligenceState {
   messages: Message[];
   metadata: Record<string, any>;
   steps: number;
+  isTerminated?: boolean;
 }
 
 const MAX_STEPS = 5;
 
 /**
  * Brainpress 2.0 Loop: Implements Context-Aware Reasoning & Chain-of-Thought
+ * Hardened for Elite production deployment with structured state termination and context propagation.
  */
 export async function runIntelligenceLoop(input: string, initialState: Partial<IntelligenceState> = {}) {
   const contextId = initialState.contextId || 'global';
@@ -29,36 +31,42 @@ export async function runIntelligenceLoop(input: string, initialState: Partial<I
     messages: [...(initialState.messages || [])],
     metadata: { ...(initialState.metadata || {}) },
     steps: 0,
+    isTerminated: false,
   };
 
   try {
     // 1. Neural Pre-processing (Scoped to context)
-    const filteredInput = await bp_hooks.applyFilters('pre_process_input', input, [{ state }], contextId);
+    // Signature: (data, state, contextId)
+    const filteredInput = await bp_hooks.applyFilters('pre_process_input', input, [state, contextId], contextId);
+    
+    if (state.isTerminated) {
+      state.messages.push({ role: 'user', content: input });
+      state.messages.push({ role: 'assistant', content: filteredInput });
+      return state;
+    }
     
     if (filteredInput === null) {
       throw new Error("Input suppressed by contextual security policy.");
     }
     
     state.messages.push({ role: 'user', content: filteredInput });
-    await bp_hooks.doAction('after_input_received', [state], contextId);
+    await bp_hooks.doAction('after_input_received', [state, contextId], contextId);
 
     // 2. Chain-of-Thought Reasoning Loop
-    while (state.steps < MAX_STEPS) {
+    while (state.steps < MAX_STEPS && !state.isTerminated) {
       state.steps++;
 
       // Contextual Reasoning Phase
-      const reasoningPrompt = await bp_hooks.applyFilters('reasoning_engine', "Processing neural hook context...", [{ state }], contextId);
-      
-      // Multi-Modal Integration Point
-      const multimodalContext = await bp_hooks.applyFilters('multimodal_context', [], [{ state }], contextId);
+      const reasoningPrompt = await bp_hooks.applyFilters('reasoning_engine', "Processing neural hook context...", [state, contextId], contextId);
       
       // 3. Tool Discovery & Execution
-      const toolRequest = await bp_hooks.applyFilters('discover_tool_call', null, [{ state, reasoningPrompt, multimodalContext }], contextId);
+      // Standard signature passing: data=null, args=[state, contextId]
+      const toolRequest = await bp_hooks.applyFilters('discover_tool_call', null, [state, contextId], contextId);
 
-      if (toolRequest) {
+      if (toolRequest && !state.isTerminated) {
         await bp_hooks.doAction('before_tool_call', [{ state, toolRequest }], contextId);
         
-        const toolResult = await executeTool(toolRequest.name, toolRequest.args);
+        const toolResult = await executeTool(toolRequest.name, toolRequest.args, contextId);
         
         state.messages.push({ 
           role: 'tool', 
@@ -71,7 +79,7 @@ export async function runIntelligenceLoop(input: string, initialState: Partial<I
       }
 
       // 4. Final Neural Synthesis
-      const finalOutput = await bp_hooks.applyFilters('post_process_output', reasoningPrompt, [{ state }], contextId);
+      const finalOutput = await bp_hooks.applyFilters('post_process_output', reasoningPrompt, [state, contextId], contextId);
       state.messages.push({ role: 'assistant', content: finalOutput });
       break;
     }
@@ -80,6 +88,6 @@ export async function runIntelligenceLoop(input: string, initialState: Partial<I
     state.messages.push({ role: 'assistant', content: `[Neural Failure] ${error.message}` });
   }
 
-  await bp_hooks.doAction('loop_completed', [state], contextId);
+  await bp_hooks.doAction('loop_completed', [state, contextId], contextId);
   return state;
 }

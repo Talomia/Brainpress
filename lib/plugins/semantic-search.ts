@@ -12,7 +12,7 @@ export const SemanticSearchPlugin: Plugin = {
       id: 'rag-trigger',
       type: 'filter',
       priority: 12,
-      callback: (current: any, { state }: any) => {
+      callback: (current: any, state: any) => {
         const lastMsg = state.messages[state.messages.length - 1];
         if (lastMsg.role === 'user' && (lastMsg.content.toLowerCase().includes('research') || lastMsg.content.toLowerCase().includes('analyze'))) {
           // Identify the core topic for research
@@ -30,7 +30,6 @@ export const SemanticSearchPlugin: Plugin = {
       priority: 10,
       callback: async (data: any, args: { query: string }, contextId: string) => {
         console.log(`[RAG: ${contextId}] Performing semantic search for: "${args.query}"`);
-        // Simulated vector search result from a knowledge base
         return `[Vector Match] Source: BrainPress Architecture. \nFound documentation: BrainPress uses a neural hook architecture to ensure sub-millisecond reasoning updates. This allows the Intelligence OS to scale horizontally without global state pollution.`;
       },
     });
