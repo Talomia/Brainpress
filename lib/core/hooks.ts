@@ -1,5 +1,3 @@
-import { bp_hooks } from './hooks';
-
 export type HookType = 'action' | 'filter';
 
 export interface BrainpressHook {
