@@ -4,33 +4,50 @@ import { Plugin } from '../core/plugins';
 export const CalculatorPlugin: Plugin = {
   id: 'bp-calc-tool',
   name: 'Mathematical Tools',
-  version: '1.0.0',
-  description: 'Adds calculation capabilities to Brainpress agents.',
+  version: '2.0.0',
+  description: 'Adds secure mathematical calculation capabilities to Brainpress agents.',
   init: () => {
-    // Register the tool handler
+    // 1. Secure Tool Handler
+    // Brainpress 2.0: callback signature is (data, args, contextId)
     bp_hooks.addHook('tool_handler_calculate', {
-      id: 'calc-handler',
+      id: 'calc-handler-secure',
       type: 'filter',
       priority: 10,
-      callback: (args: { expression: string }) => {
+      callback: (data: any, args: { expression: string }) => {
         try {
-          // Note: In production use a safe math parser
-          return eval(args.expression);
+          if (!args || !args.expression) return data;
+
+          // Remove all whitespace
+          const sanitized = args.expression.replace(/\s+/g, '');
+          
+          // Only allow numbers, basic operators, and parentheses
+          if (!/^[0-9+\-*/().]+$/.test(sanitized)) {
+            throw new Error("Illegal characters in expression");
+          }
+
+          // Secure evaluation using Function constructor (isolated scope)
+          const result = new Function(`return ${sanitized}`)();
+          
+          if (isNaN(result) || !isFinite(result)) {
+            throw new Error("Invalid mathematical result");
+          }
+
+          return result.toString();
         } catch (e) {
-          return "Calculation error";
+          return `[Calc Error] ${e instanceof Error ? e.message : 'Invalid expression'}`;
         }
       },
     });
 
-    // Intercept reasoning to trigger tool if needed
+    // 2. Unified Tool Trigger
     bp_hooks.addHook('discover_tool_call', {
       id: 'calc-trigger',
       type: 'filter',
       priority: 10,
       callback: (current: any, { state }: any) => {
         const lastMsg = state.messages[state.messages.length - 1];
-        if (lastMsg.role === 'user' && lastMsg.content.includes('calc:')) {
-          const expr = lastMsg.content.split('calc:')[1].trim();
+        if (lastMsg.role === 'user' && lastMsg.content.toLowerCase().includes('calc:')) {
+          const expr = lastMsg.content.split(/calc:/i)[1].trim();
           return { name: 'calculate', args: { expression: expr } };
         }
         return current;

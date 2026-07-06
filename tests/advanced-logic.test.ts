@@ -29,7 +29,7 @@ describe('Deep Logic Review: Brainpress Advanced Patterns', () => {
     // Check if tool message exists in history
     const toolMessage = result.messages.find(m => m.role === 'tool');
     expect(toolMessage).toBeDefined();
-    expect(toolMessage?.content).toContain('Sub-agent analyzed');
+    expect(toolMessage?.content).toContain('[Sub-Agent Result]');
   });
 
   test('RBAC should correctly filter actions based on role', async () => {

@@ -21,15 +21,6 @@ export default function RootLayout({
       className="h-full antialiased"
     >
       <body className={inter.className}>
-        <h2 style={{ 
-          fontSize: '1.5rem', 
-          fontWeight: 800, 
-          marginBottom: '3rem', 
-          background: 'linear-gradient(to right, #fff, #888)', 
-          WebkitBackgroundClip: 'text', 
-          WebkitTextFillColor: 'transparent',
-          letterSpacing: '-1px'
-        }}>BrainPress</h2>
         <NotificationProvider>
           {children}
         </NotificationProvider>

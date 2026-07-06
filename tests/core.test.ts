@@ -4,10 +4,6 @@ import { bp_plugins } from '../lib/core/plugins';
 import { SearchPlugin } from '../lib/plugins/search-plugin';
 
 describe('Brainpress Core Logic', () => {
-  beforeEach(() => {
-    // Reset hooks/plugins if necessary (not implemented in core yet, but for testing we assume fresh state)
-  });
-
   test('Hook system should correctly apply filters', async () => {
     bp_hooks.addHook('pre_process_input', {
       id: 'test-filter',
@@ -20,12 +16,22 @@ describe('Brainpress Core Logic', () => {
     expect(result).toBe('FILTERED: hello');
   });
 
-  test('Intelligence loop should execute hooks in order', async () => {
+  test('Intelligence loop should execute tools correctly', async () => {
+    // Clear any existing reasoning engines to ensure the mock one wins or we see the result
+    bp_hooks.removeHook('reasoning_engine', 'real-gemini-reasoning-2.0');
+    bp_hooks.removeHook('reasoning_engine', 'openai-reasoner-2.0');
+
     await bp_plugins.register(SearchPlugin);
-    const result = await runIntelligenceLoop('test query');
     
-    const lastMessage = result.messages[result.messages.length - 1];
-    expect(lastMessage.content).toContain('Search Plugin');
-    expect(lastMessage.content).toContain('References: Brainpress Knowledge Base');
+    const result = await runIntelligenceLoop('search: BrainPress');
+    
+    // Check tool message
+    const toolMsg = result.messages.find(m => m.role === 'tool');
+    expect(toolMsg).toBeDefined();
+    expect(toolMsg?.content).toContain('[Search Result]');
+    
+    // Check history for the search result content
+    const hasSearchResult = result.messages.some(m => m.content && m.content.includes('BrainPress 2.0 implements a decoupled hook architecture'));
+    expect(hasSearchResult).toBe(true);
   });
 });
