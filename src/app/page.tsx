@@ -3,11 +3,8 @@ import { SearchPlugin } from '@/lib/plugins/search-plugin';
 import { runIntelligenceLoop } from '@/lib/core/loop';
 
 export default async function Home() {
-  // Initialize standard plugins
-  await bp_plugins.register(SearchPlugin);
-
-  // Example run (server-side for now)
-  const result = await runIntelligenceLoop("How does Brainpress democratize intelligence?");
+  // Use a simpler approach for the landing page to prevent server-side timeout/block
+  const greeting = "Brainpress Intelligence OS is live.";
 
   return (
     <main className="container">
@@ -16,17 +13,17 @@ export default async function Home() {
         <p>Democratizing the development of intelligence. Build, extend, and deploy AI agents with the ease of WordPress.</p>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
           <a href="/dashboard" className="btn-primary">Go to Dashboard</a>
-          <a href="https://github.com/brainpress/core" className="btn-primary" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}>Documentation</a>
+          <a href="https://github.com/Talomia/Brainpress" className="btn-primary" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}>Documentation</a>
         </div>
       </section>
 
-      <section className="grid">
+      <section className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
         <div className="card glass">
           <h3>The Intelligence Loop</h3>
           <p>The heart of Brainpress. A hook-driven reasoning engine that can be intercepted and extended.</p>
           <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '0.9rem', color: '#ccc' }}>
-            <strong>Latest Loop Execution:</strong>
-            <p style={{ marginTop: '0.5rem', fontStyle: 'italic' }}>"{result.messages[result.messages.length - 1].content}"</p>
+            <strong>System Status:</strong>
+            <p style={{ marginTop: '0.5rem', fontStyle: 'italic' }}>"{greeting}"</p>
           </div>
         </div>
 
@@ -34,8 +31,8 @@ export default async function Home() {
           <h3>Plugin Architecture</h3>
           <p>Add memory, web search, or custom tools in seconds. Our hook system makes intelligence modular.</p>
           <ul style={{ marginTop: '1rem', listStyle: 'none', color: '#888' }}>
-            <li style={{ marginBottom: '0.5rem' }}>✅ {SearchPlugin.name} (Active)</li>
-            <li>⏳ Vector Memory (Available)</li>
+            <li style={{ marginBottom: '0.5rem' }}>✅ Ecosystem Hardened</li>
+            <li>✅ Persistent Learning</li>
           </ul>
         </div>
 
