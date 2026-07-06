@@ -7,6 +7,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholde
 export const bp_supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: { persistSession: false },
   realtime: {
-    transport: ws
+    // Cast to any to bypass the TypeScript type mismatch between Node 'ws' and browser 'WebSocket'
+    transport: ws as any
   }
 });
