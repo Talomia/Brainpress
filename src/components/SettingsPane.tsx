@@ -8,11 +8,38 @@ export default function SettingsPane() {
   const [apiKey, setApiKey] = useState('************************');
   const [theme, setTheme] = useState('Nova Dark');
   const [autoPublish, setAutoPublish] = useState(true);
+  const [loading, setLoading] = useState(false);
   const { showToast } = useNotifications();
 
+  useEffect(() => {
+    const loadSettings = async () => {
+      const { data } = await bp_supabase.from('user_settings').select('*').single();
+      if (data) {
+        setAutoPublish(data.auto_publish);
+        setTheme(data.theme || 'Nova Dark');
+      }
+    };
+    loadSettings();
+  }, []);
+
   const handleSave = async () => {
-    showToast('Settings saved to cloud', 'success');
-    // Logic to persist to Supabase user_settings table
+    setLoading(true);
+    try {
+      const { error } = await bp_supabase.from('user_settings').upsert({
+        id: 'global-config', // Simplified for single-user production demo
+        auto_publish: autoPublish,
+        theme: theme,
+        updated_at: new Date().toISOString()
+      });
+
+      if (error) throw error;
+      showToast('Configuration synchronized with Supabase', 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('Persistence failed. Check local Supabase logs.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -21,19 +48,10 @@ export default function SettingsPane() {
         <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', borderBottom: '1px solid #333', paddingBottom: '0.5rem' }}>Core Intelligence</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="setting-item">
-            <label style={{ display: 'block', color: '#888', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Gemini API Key</label>
-            <input 
-              type="password" 
-              value={apiKey} 
-              onChange={(e) => setApiKey(e.target.value)}
-              style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid #333', padding: '0.8rem', borderRadius: '8px', color: 'white' }}
-            />
-          </div>
-          <div className="setting-item">
             <label style={{ display: 'block', color: '#888', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Primary LLM Model</label>
             <select style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid #333', padding: '0.8rem', borderRadius: '8px', color: 'white' }}>
+              <option>GPT-4o (OpenAI Bridge)</option>
               <option>Gemini 1.5 Pro</option>
-              <option>Gemini 1.5 Flash</option>
               <option>Local Llama 3 (Ollama)</option>
             </select>
           </div>
@@ -69,7 +87,9 @@ export default function SettingsPane() {
         </div>
       </section>
 
-      <button className="btn-primary" style={{ width: '100%', padding: '1rem' }} onClick={handleSave}>Save Configuration</button>
+      <button className="btn-primary" style={{ width: '100%', padding: '1rem', opacity: loading ? 0.5 : 1 }} onClick={handleSave} disabled={loading}>
+        {loading ? 'Synchronizing...' : 'Save Configuration'}
+      </button>
     </div>
   );
 }
