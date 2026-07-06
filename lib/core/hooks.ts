@@ -3,7 +3,7 @@ export type HookType = 'action' | 'filter';
 export interface BrainpressHook {
   id: string;
   type: HookType;
-  callback: (data: any, ...args: any[]) => any | Promise<any>;
+  callback: (...args: any[]) => any | Promise<any>;
   priority: number;
 }
 
@@ -36,7 +36,7 @@ class HookManager {
     const hooks = this.hooks.get(tag) || [];
     for (const hook of hooks) {
       if (hook.type === 'action') {
-        await hook.callback(...args);
+        await (hook.callback as any)(...args);
       }
     }
   }
@@ -46,7 +46,7 @@ class HookManager {
     let filteredData = data;
     for (const hook of hooks) {
       if (hook.type === 'filter') {
-        filteredData = await hook.callback(filteredData, ...args);
+        filteredData = await (hook.callback as any)(filteredData, ...args);
       }
     }
     return filteredData;
