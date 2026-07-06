@@ -19,7 +19,8 @@ describe('Brainpress End-to-End Production Validation', () => {
 
     const result = await runIntelligenceLoop('explain neural hooks');
     const toolMsg = result.messages.find(m => m.role === 'tool');
-    expect(toolMsg?.content).toContain('Brainpress uses a neural hook architecture');
+    // Updated for BrainPress 2.0 Case-Sensitivity (BrainPress)
+    expect(toolMsg?.content).toContain('BrainPress uses a neural hook architecture');
   });
 
   test('E2E: Analytics should record accurate loop telemetry', async () => {

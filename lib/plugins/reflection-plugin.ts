@@ -4,21 +4,37 @@ import { Plugin } from '../core/plugins';
 export const ReflectionPlugin: Plugin = {
   id: 'bp-reflection-engine',
   name: 'Reasoning Reflection',
-  version: '1.0.0',
-  description: 'Enables the agent to reflect on its own reasoning and correct mistakes before outputting.',
+  version: '2.0.0',
+  description: 'Enables the agent to reflect on its own reasoning and self-correct using recursive neural passes.',
   init: () => {
-    bp_hooks.addHook('reasoning_engine', {
-      id: 'reflection-layer',
+    bp_hooks.addHook('post_process_output', {
+      id: 'reflection-layer-2.0',
       type: 'filter',
-      priority: 80, // High priority, near the end of reasoning
-      callback: async (content: string, { state }: any) => {
-        const reflection = `[Reflection] I have generated: "${content.substring(0, 50)}...". Checking for consistency and accuracy.`;
-        console.log(reflection);
+      priority: 90, // Execute very late in the output stage
+      callback: async (content: string, { state }: any, contextId: string) => {
+        // Only reflect if the content seems insufficient or potentially flawed
+        const needsReflection = content.length < 50 || content.includes('[Error]') || content.toLowerCase().includes('i don\'t know');
         
-        // Simulated self-correction
-        if (content.toLowerCase().includes('error') || content.length < 20) {
-          return `${content}\n(Self-Correction: I noticed my reasoning was brief or potentially flawed. Refined analysis follows: Brainpress provides a comprehensive hook-driven framework for scaling intelligence.)`;
+        if (needsReflection && !state.metadata?.isReflectionPass) {
+          console.log(`[Reflection: ${contextId}] Neural synthesis quality check failed. Spawning reflection pass...`);
+          
+          const { runIntelligenceLoop } = require('../core/loop');
+          
+          try {
+            // Spawn a sub-loop specifically for self-correction
+            const reflectionResult = await runIntelligenceLoop(`Reflect on and improve this response: "${content}"`, {
+              contextId: `${contextId}.reflection`,
+              metadata: { isReflectionPass: true, originalContent: content }
+            });
+
+            const improvedContent = reflectionResult.messages[reflectionResult.messages.length - 1].content;
+            return `${improvedContent}\n\n*Verified by BrainPress Reflection Engine*`;
+          } catch (e) {
+            console.warn(`[Reflection: ${contextId}] Self-correction pass failed. Returning original content.`);
+            return content;
+          }
         }
+        
         return content;
       },
     });

@@ -18,7 +18,8 @@ describe('Deep Logic Review: Brainpress Advanced Patterns', () => {
 
     const result = await runIntelligenceLoop('test reflection');
     const lastMessage = result.messages[result.messages.length - 1];
-    expect(lastMessage.content).toContain('Self-Correction');
+    // In v2, we check for the verified badge
+    expect(lastMessage.content).toContain('Verified by BrainPress Reflection Engine');
   });
 
   test('Recursive orchestrator should spawn and handle sub-agent tools', async () => {
