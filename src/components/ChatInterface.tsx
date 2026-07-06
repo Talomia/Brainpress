@@ -8,7 +8,6 @@ import { GeminiPlugin } from '@/lib/plugins/gemini-plugin';
 import { OpenAIPlugin } from '@/lib/plugins/openai-plugin';
 import { SearchPlugin } from '@/lib/plugins/search-plugin';
 import { MemoryPlugin } from '@/lib/plugins/memory-plugin';
-import { PersonaTheme } from '@/lib/plugins/persona-theme';
 import { GuardrailPlugin } from '@/lib/plugins/guardrail-plugin';
 import { CalculatorPlugin } from '@/lib/plugins/calculator-plugin';
 import { MultiAgentPlugin } from '@/lib/plugins/multi-agent-plugin';
@@ -36,7 +35,7 @@ export default function ChatInterface() {
   useEffect(() => {
     const init = async () => {
       const fullStack = [
-        OpenAIPlugin, GeminiPlugin, SearchPlugin, MemoryPlugin, PersonaTheme, 
+        OpenAIPlugin, GeminiPlugin, SearchPlugin, MemoryPlugin, 
         GuardrailPlugin, CalculatorPlugin, MultiAgentPlugin, 
         AutoPublisherPlugin, MultiModalPlugin, AnalyticsPlugin, 
         ErrorHandlingPlugin, TranslationPlugin,
