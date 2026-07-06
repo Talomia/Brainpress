@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { runIntelligenceLoop } from '@/lib/core/loop';
 import { bp_plugins } from '@/lib/core/plugins';
 import { useNotifications } from './NotificationProvider';
@@ -30,10 +30,15 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<{role: string, content: string}[]>([]);
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState<any[]>([]);
-  const { showToast } = useNotifications();
+  const { showToast, activeAgent } = useNotifications();
+  const initialized = useRef(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Singleton Initialization: Prevents toast spam and redundant plugin registration
   useEffect(() => {
-    const init = async () => {
+    if (initialized.current) return;
+    
+    const initEcosystem = async () => {
       const fullStack = [
         OpenAIPlugin, GeminiPlugin, SearchPlugin, MemoryPlugin, 
         GuardrailPlugin, CalculatorPlugin, MultiAgentPlugin, 
@@ -48,10 +53,19 @@ export default function ChatInterface() {
       for (const p of fullStack) {
         bp_plugins.register(p);
       }
-      showToast('Intelligence ecosystem initialized', 'success');
+      showToast('Intelligence Ecosystem Synchronized', 'success');
+      initialized.current = true;
     };
-    init();
+    
+    initEcosystem();
   }, [showToast]);
+
+  // Auto-scroll on new messages
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
 
   const handleSend = async () => {
     if (!input.trim() && attachments.length === 0) return;
@@ -67,112 +81,178 @@ export default function ChatInterface() {
     setAttachments([]);
 
     try {
-      // Simulate streaming for the "Thinking..." phase
       let currentOutput = "";
-      const streamText = async (text: string) => {
-        for (let i = 0; i < text.length; i += 5) {
-          currentOutput += text.substring(i, i + 5);
+      const streamText = async (text: string, isThinking = false) => {
+        for (let i = 0; i < text.length; i += 8) {
+          currentOutput += text.substring(i, i + 8);
           setMessages(prev => {
             const last = prev[prev.length - 1];
-            if (last.role === 'assistant') {
+            if (last && last.role === 'assistant') {
               return [...prev.slice(0, -1), { role: 'assistant', content: currentOutput }];
             }
             return [...prev, { role: 'assistant', content: currentOutput }];
           });
-          await new Promise(r => setTimeout(r, 20));
+          await new Promise(r => setTimeout(r, 15));
         }
       };
 
-      await streamText("Searching knowledge base... Applying neural hooks... Reasoning... ");
+      await streamText(`[Neural Hook: ${activeAgent.name}] Reasoning... `, true);
 
       const result = await runIntelligenceLoop(currentInput, { 
         metadata: { attachments: currentAttachments } 
       });
       
       const finalResponse = result.messages[result.messages.length - 1].content;
-      currentOutput = ""; // Reset for final response stream
+      currentOutput = ""; // Reset for final response
       await streamText(finalResponse);
 
-      showToast('Agent reasoning loop completed', 'info');
     } catch (e) {
-      showToast('Error in reasoning loop', 'error');
+      showToast('Neural Loop Interrupted', 'error');
+      setMessages(prev => [...prev, { role: 'assistant', content: '[Error] Intelligence synthesis failed. Please verify neural hooks.' }]);
     } finally {
       setLoading(false);
     }
   };
 
-  const addSimulatedAttachment = (type: string) => {
-    setAttachments(prev => [...prev, { name: `demo-${type}.jpg`, type }]);
-  };
-
   return (
-    <div className="glass" style={{ display: 'flex', flexDirection: 'column', height: '700px', width: '100%', maxWidth: '900px', margin: '0 auto', overflow: 'hidden' }}>
-      {/* Messages */}
-      <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="glass fade-in" style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: 'calc(100vh - 180px)', 
+      width: '100%', 
+      maxWidth: '1000px', 
+      margin: '0 auto', 
+      overflow: 'hidden',
+      border: `1px solid ${activeAgent.styles.accentColor}33`,
+      boxShadow: `0 20px 50px rgba(0,0,0,0.5), 0 0 30px ${activeAgent.styles.glowColor.replace('0.4', '0.1')}` 
+    }}>
+      {/* Messages Feed */}
+      <div 
+        ref={scrollRef}
+        style={{ 
+          flex: 1, 
+          padding: '2.5rem', 
+          overflowY: 'auto', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '2rem',
+          scrollBehavior: 'smooth' 
+        }}
+      >
         {messages.length === 0 && (
-          <div style={{ textAlign: 'center', color: '#666', marginTop: '20%' }}>
-            <h2 style={{ color: '#444', marginBottom: '1rem' }}>Brainpress Intelligence</h2>
-            <p>Multimodal, autonomous, and secure.</p>
+          <div style={{ textAlign: 'center', color: '#444', marginTop: '15%' }}>
+            <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>{activeAgent.icon}</div>
+            <h2 style={{ color: '#fff', marginBottom: '0.5rem', fontWeight: 800 }}>{activeAgent.name}</h2>
+            <p style={{ fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto', opacity: 0.6 }}>{activeAgent.description}</p>
           </div>
         )}
         {messages.map((m, i) => (
-          <div key={i} className={`fade-in`} style={{ 
+          <div key={i} className="fade-in" style={{ 
             alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-            maxWidth: '80%',
-            padding: '1.2rem 1.8rem',
-            borderRadius: m.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-            background: m.role === 'user' ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-            backdropFilter: 'blur(10px)',
-            border: m.role === 'user' ? 'none' : '1px solid #333',
-            color: 'white',
-            lineHeight: '1.6',
-            boxShadow: m.role === 'user' ? '0 10px 20px rgba(0,112,243,0.3)' : 'none',
-            fontSize: '0.95rem',
-            whiteSpace: 'pre-wrap'
+            maxWidth: '85%',
+            padding: '1.4rem 2rem',
+            borderRadius: m.role === 'user' ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
+            background: m.role === 'user' ? activeAgent.styles.accentColor : 'rgba(255,255,255,0.03)',
+            backdropFilter: 'blur(20px)',
+            border: m.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.05)',
+            color: m.role === 'user' ? '#000' : '#ddd',
+            lineHeight: '1.7',
+            fontSize: '1rem',
+            fontWeight: m.role === 'user' ? 600 : 400,
+            whiteSpace: 'pre-wrap',
+            boxShadow: m.role === 'user' ? `0 10px 25px ${activeAgent.styles.glowColor}` : 'none'
           }}>
             {m.content}
-            {m.role === 'assistant' && m.content.length < 5 && <span className="pulse">...</span>}
           </div>
         ))}
         {loading && messages[messages.length-1]?.role !== 'assistant' && (
-          <div style={{ alignSelf: 'flex-start', padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '20px', width: '60%' }}>
-            <div className="skeleton" style={{ height: '1rem', width: '80%', marginBottom: '0.8rem' }}></div>
-            <div className="skeleton" style={{ height: '1rem', width: '50%' }}></div>
+          <div style={{ alignSelf: 'flex-start', padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', width: '70%', border: '1px solid #111' }}>
+            <div className="skeleton" style={{ height: '1.2rem', width: '90%', marginBottom: '1rem' }}></div>
+            <div className="skeleton" style={{ height: '1.2rem', width: '60%' }}></div>
           </div>
         )}
       </div>
 
-      {/* Input Area */}
-      <div style={{ padding: '2rem', borderTop: '1px solid var(--card-border)', background: 'rgba(0,0,0,0.2)' }}>
+      {/* Robust Input Terminal */}
+      <div style={{ 
+        padding: '2.5rem', 
+        borderTop: '1px solid rgba(255,255,255,0.05)', 
+        background: 'rgba(0,0,0,0.4)' 
+      }}>
         {attachments.length > 0 && (
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', gap: '0.8rem', marginBottom: '1.5rem' }}>
             {attachments.map((a, i) => (
-              <span key={i} style={{ background: 'rgba(255,255,255,0.1)', padding: '0.3rem 0.6rem', borderRadius: '4px', fontSize: '0.7rem' }}>📎 {a.name}</span>
+              <span key={i} style={{ 
+                background: activeAgent.styles.accentColor, 
+                color: '#000',
+                padding: '0.4rem 0.8rem', 
+                borderRadius: '6px', 
+                fontSize: '0.75rem',
+                fontWeight: 800 
+              }}>
+                ATTACHMENT: {a.name}
+              </span>
             ))}
           </div>
         )}
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1.2rem', alignItems: 'center' }}>
           <button 
-            title="Attach Image"
-            onClick={() => addSimulatedAttachment('image')}
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #333', color: 'white', padding: '0.8rem', borderRadius: '8px', cursor: 'pointer' }}
-          >🖼️</button>
+            title="Attach Data Source"
+            onClick={() => setAttachments(prev => [...prev, { name: 'neural-context.png', type: 'image' }])}
+            style={{ 
+              background: 'rgba(255,255,255,0.03)', 
+              border: '1px solid #222', 
+              color: 'white', 
+              width: '50px',
+              height: '50px',
+              borderRadius: '12px', 
+              cursor: 'pointer',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              fontSize: '1.2rem',
+              transition: 'all 0.2s' 
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+          >📎</button>
           <input 
             type="text" 
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Ask anything or use '@researcher' / 'calc: expression'..."
+            placeholder={`Instruct ${activeAgent.name}...`}
             style={{ 
               flex: 1, 
-              background: 'rgba(0,0,0,0.3)', 
-              border: '1px solid #333', 
-              borderRadius: '8px', 
-              padding: '1rem', 
-              color: 'white' 
+              background: 'rgba(0,0,0,0.5)', 
+              border: '1px solid #222', 
+              borderRadius: '12px', 
+              padding: '1.2rem 1.5rem', 
+              color: 'white',
+              fontSize: '1rem',
+              outline: 'none',
+              transition: 'border-color 0.3s'
             }}
+            onFocus={(e) => e.currentTarget.style.borderColor = activeAgent.styles.accentColor}
+            onBlur={(e) => e.currentTarget.style.borderColor = '#222'}
           />
-          <button className="btn-primary" onClick={handleSend} disabled={loading} style={{ padding: '1rem 2rem' }}>Send</button>
+          <button 
+            className="btn-primary" 
+            onClick={handleSend} 
+            disabled={loading} 
+            style={{ 
+              padding: '0 2.5rem', 
+              height: '50px',
+              borderRadius: '12px',
+              background: activeAgent.styles.accentColor,
+              color: '#000',
+              fontWeight: 800,
+              fontSize: '1rem',
+              boxShadow: loading ? 'none' : `0 0 20px ${activeAgent.styles.glowColor}` 
+            }}
+          >
+            {loading ? 'SYNTHESIZING' : 'EXECUTE'}
+          </button>
         </div>
       </div>
     </div>
