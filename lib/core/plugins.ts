@@ -1,5 +1,13 @@
-import { Plugin } from './plugins';
 import { bp_supabase } from '../supabase/client';
+
+export interface Plugin {
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  init?: () => void | Promise<void>;
+  dependencies?: string[];
+}
 
 class PluginManager {
   private plugins: Plugin[] = [];
