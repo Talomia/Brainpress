@@ -13,7 +13,8 @@ class VersionManager {
       id: Math.random().toString(36).substring(7),
     };
     this.history.get(entityId)?.push(version);
-    await bp_hooks.doAction('version_created', { entityId, version });
+    // Brainpress 2.0: doAction expects [args] array
+    await bp_hooks.doAction('version_created', [{ entityId, version }]);
     return version;
   }
 

@@ -7,33 +7,57 @@ export interface BrainpressHook {
   priority: number;
 }
 
+/**
+ * Brainpress 2.0 HookManager: Supports scoped contexts to prevent state pollution.
+ * Contexts allow for sandboxed plugin registration and agent-specific neural overrides.
+ */
 class HookManager {
-  private hooks: Map<string, BrainpressHook[]> = new Map();
+  private globalHooks: Map<string, BrainpressHook[]> = new Map();
+  private contexts: Map<string, Map<string, BrainpressHook[]>> = new Map();
 
-  addHook(tag: string, hook: BrainpressHook) {
-    if (!this.hooks.has(tag)) {
-      this.hooks.set(tag, []);
+  addHook(tag: string, hook: BrainpressHook, contextId: string = 'global') {
+    let hooksMap: Map<string, BrainpressHook[]>;
+    
+    if (contextId === 'global') {
+      hooksMap = this.globalHooks;
+    } else {
+      if (!this.contexts.has(contextId)) {
+        this.contexts.set(contextId, new Map());
+      }
+      hooksMap = this.contexts.get(contextId)!;
+    }
+
+    if (!hooksMap.has(tag)) {
+      hooksMap.set(tag, []);
     }
     
-    // Prevent duplicate hook IDs
-    const existing = this.hooks.get(tag);
+    const existing = hooksMap.get(tag);
     if (existing?.some(h => h.id === hook.id)) {
-      this.removeHook(tag, hook.id);
+      this.removeHook(tag, hook.id, contextId);
     }
 
-    this.hooks.get(tag)?.push(hook);
-    this.hooks.get(tag)?.sort((a, b) => a.priority - b.priority);
+    hooksMap.get(tag)?.push(hook);
+    hooksMap.get(tag)?.sort((a, b) => a.priority - b.priority);
   }
 
-  removeHook(tag: string, hookId: string) {
-    if (this.hooks.has(tag)) {
-      const filtered = this.hooks.get(tag)?.filter(h => h.id !== hookId) || [];
-      this.hooks.set(tag, filtered);
+  removeHook(tag: string, hookId: string, contextId: string = 'global') {
+    const hooksMap = contextId === 'global' ? this.globalHooks : this.contexts.get(contextId);
+    if (hooksMap?.has(tag)) {
+      const filtered = hooksMap.get(tag)?.filter(h => h.id !== hookId) || [];
+      hooksMap.set(tag, filtered);
     }
   }
 
-  async doAction(tag: string, ...args: any[]) {
-    const hooks = this.hooks.get(tag) || [];
+  private getEffectiveHooks(tag: string, contextId: string = 'global'): BrainpressHook[] {
+    const global = this.globalHooks.get(tag) || [];
+    const contextual = (contextId !== 'global' ? this.contexts.get(contextId)?.get(tag) : []) || [];
+    
+    // Contextual hooks override or extend global ones
+    return [...global, ...contextual].sort((a, b) => a.priority - b.priority);
+  }
+
+  async doAction(tag: string, args: any[], contextId: string = 'global') {
+    const hooks = this.getEffectiveHooks(tag, contextId);
     for (const hook of hooks) {
       if (hook.type === 'action') {
         await (hook.callback as any)(...args);
@@ -41,8 +65,8 @@ class HookManager {
     }
   }
 
-  async applyFilters(tag: string, data: any, ...args: any[]): Promise<any> {
-    const hooks = this.hooks.get(tag) || [];
+  async applyFilters(tag: string, data: any, args: any[] = [], contextId: string = 'global'): Promise<any> {
+    const hooks = this.getEffectiveHooks(tag, contextId);
     let filteredData = data;
     for (const hook of hooks) {
       if (hook.type === 'filter') {
@@ -50,10 +74,6 @@ class HookManager {
       }
     }
     return filteredData;
-  }
-
-  getHooks(tag: string) {
-    return this.hooks.get(tag) || [];
   }
 }
 

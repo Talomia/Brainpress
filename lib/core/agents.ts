@@ -85,30 +85,30 @@ class AgentManager {
     
     this.activeAgentId = id;
     
-    // Unified Neural Hook: Intercept reasoning at the source
+    // Brainpress 2.0: Scoped Neural Hook
+    // Instead of global pollution, we register this hook specifically for the agent's contextId (which matches its id)
     bp_hooks.addHook('pre_process_input', {
       id: 'agent-persona-interceptor',
       type: 'filter',
       priority: 10,
       callback: (input: string) => `${agent.system_prompt} ${input}`
-    });
+    }, id);
 
-    // Governance Hook: Filter available tools based on agent role
+    // 2.0 Governance Hook: Scoped tool filtering
     bp_hooks.addHook('discover_tool_call', {
       id: 'agent-tool-governance',
       type: 'filter',
       priority: 1,
       callback: (toolName: string) => {
-        // If the agent has a restricted toolset, block unauthorized calls
         if (agent.allowed_plugins.length > 0 && !agent.allowed_plugins.some(p => toolName.includes(p))) {
-            console.warn(`[Governance] Agent ${agent.name} blocked from using unauthorized tool: ${toolName}`);
-            return null; // Suppress tool execution
+            console.warn(`[Governance: ${id}] Blocked unauthorized tool: ${toolName}`);
+            return null; 
         }
         return toolName;
       }
-    });
+    }, id);
 
-    await bp_hooks.doAction('agent_activated', agent);
+    await bp_hooks.doAction('agent_activated', [agent], id);
   }
 
   getActiveAgent(): AgentPersona | undefined {

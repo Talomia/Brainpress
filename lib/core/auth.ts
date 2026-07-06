@@ -17,7 +17,8 @@ class AuthManager {
       role: email.includes('admin') ? 'admin' : 'editor',
     };
     this.currentUser = user;
-    await bp_hooks.doAction('user_logged_in', user);
+    // Brainpress 2.0: doAction expects [args] array
+    await bp_hooks.doAction('user_logged_in', [user]);
     return user;
   }
 
@@ -27,7 +28,8 @@ class AuthManager {
 
   async checkPermission(action: string) {
     if (!this.currentUser) return false;
-    return await bp_hooks.applyFilters('check_user_permission', this.currentUser.role === 'admin', { action, user: this.currentUser });
+    // Brainpress 2.0: applyFilters expects [args] array
+    return await bp_hooks.applyFilters('check_user_permission', this.currentUser.role === 'admin', [{ action, user: this.currentUser }]);
   }
 }
 

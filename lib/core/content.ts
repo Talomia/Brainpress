@@ -16,14 +16,14 @@ class ContentManager {
     const post: Post = {
       id: Math.random().toString(36).substring(7),
       title,
-      content: await bp_hooks.applyFilters('pre_save_post_content', content),
+      content: await bp_hooks.applyFilters('pre_save_post_content', content, []),
       author_agent_id: agentId,
       status: 'published',
       created_at: new Date(),
     };
 
     this.posts.push(post);
-    await bp_hooks.doAction('post_published', post);
+    await bp_hooks.doAction('post_published', [post]);
     return post;
   }
 

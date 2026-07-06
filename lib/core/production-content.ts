@@ -18,7 +18,7 @@ class ProductionContentManager {
       return { id: 'fallback', title, content, author_agent_id: agentId, status: 'published', created_at: new Date() };
     }
 
-    await bp_hooks.doAction('post_published', data);
+    await bp_hooks.doAction('post_published', [data]);
     return data as Post;
   }
 

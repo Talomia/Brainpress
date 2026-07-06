@@ -99,6 +99,7 @@ export default function ChatInterface() {
       await streamText(`[Neural Hook: ${activeAgent.name}] Reasoning... `, true);
 
       const result = await runIntelligenceLoop(currentInput, { 
+        contextId: activeAgent.id,
         metadata: { attachments: currentAttachments } 
       });
       

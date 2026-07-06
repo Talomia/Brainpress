@@ -9,7 +9,8 @@ export async function fetchWithRetry(url: string, options: any = {}, retries = 3
     } catch (e) {
       if (i === retries - 1) throw e;
       await new Promise(res => setTimeout(res, 1000 * Math.pow(2, i)));
-      await bp_hooks.doAction('fetch_retry', { url, attempt: i + 1 });
+      // Brainpress 2.0: doAction expects [args] array
+      await bp_hooks.doAction('fetch_retry', [{ url, attempt: i + 1 }]);
     }
   }
 }
