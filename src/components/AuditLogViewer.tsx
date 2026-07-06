@@ -77,9 +77,8 @@ export default function AuditLogViewer() {
                   <div style={{ fontSize: '0.85rem', color: '#0070f3', fontWeight: 700, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.input}</div>
                   <div style={{ fontSize: '0.85rem', color: '#aaa', lineHeight: '1.5', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{log.output}</div>
                 </div>
-              ))
-            )}
-          </>
+              ))}
+            </>
           )}
         </div>
       </div>
