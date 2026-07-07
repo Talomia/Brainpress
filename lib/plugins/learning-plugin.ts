@@ -17,7 +17,7 @@ export const AdaptiveLearningPlugin: Plugin = {
       id: 'learning-lookup-2.0',
       type: 'filter',
       priority: 5,
-      callback: async (input: string, { metadata }: any, contextId: string) => {
+      callback: async (input: string, { state, contextId }: any) => {
         const normalizedInput = input.trim().toLowerCase();
         
         try {
@@ -44,7 +44,7 @@ export const AdaptiveLearningPlugin: Plugin = {
       id: 'correction-capture-2.0',
       type: 'action',
       priority: 400,
-      callback: async (state: any) => {
+      callback: async ({ state }: any) => {
         const { messages } = state;
         if (messages.length < 3) return;
 
@@ -80,11 +80,11 @@ export const AdaptiveLearningPlugin: Plugin = {
       id: 'learning-badge',
       type: 'filter',
       priority: 35,
-      callback: (content: string, { state }: any) => {
-        if (content.includes('[Learned Context]')) {
-          return `${content}\n\n*Optimized by Adaptive Learning Engine*`;
+      callback: (current: any, { state }: any) => {
+        if (current.includes('[Learned Context]')) {
+          return `${current}\n\n*Optimized by Adaptive Learning Engine*`;
         }
-        return content;
+        return current;
       },
     });
   },

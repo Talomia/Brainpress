@@ -14,7 +14,7 @@ export async function executeTool(name: string, args: any, contextId: string = '
   try {
     // 1. Context-Aware Handler Lookup
     // In BrainPress 2.0, callbacks receive (data, args, contextId)
-    const result = await bp_hooks.applyFilters(`tool_handler_${name}`, null, [args, contextId], contextId);
+    const result = await bp_hooks.applyFilters(`tool_handler_${name}`, null, { args }, contextId);
     
     if (result === null) {
       console.warn(`[Tools: ${contextId}] Warning: Tool "${name}" returned null or has no active handler.`);
@@ -26,7 +26,7 @@ export async function executeTool(name: string, args: any, contextId: string = '
     }
 
     // 2. Post-Execution Governance
-    await bp_hooks.doAction('tool_executed', [{ name, args, result }], contextId);
+    await bp_hooks.doAction('tool_executed', { name, args, result }, contextId);
     
     return { tool: name, result, status: 'success' };
   } catch (error: any) {

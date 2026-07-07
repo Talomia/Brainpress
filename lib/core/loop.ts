@@ -36,8 +36,8 @@ export async function runIntelligenceLoop(input: string, initialState: Partial<I
 
   try {
     // 1. Neural Pre-processing (Scoped to context)
-    // Signature: (data, state, contextId)
-    const filteredInput = await bp_hooks.applyFilters('pre_process_input', input, [state, contextId], contextId);
+    // Signature: (data, { state, contextId })
+    const filteredInput = await bp_hooks.applyFilters('pre_process_input', input, { state, contextId }, contextId);
     
     if (state.isTerminated) {
       state.messages.push({ role: 'user', content: input });
@@ -50,21 +50,21 @@ export async function runIntelligenceLoop(input: string, initialState: Partial<I
     }
     
     state.messages.push({ role: 'user', content: filteredInput });
-    await bp_hooks.doAction('after_input_received', [state, contextId], contextId);
+    await bp_hooks.doAction('after_input_received', { state, contextId }, contextId);
 
     // 2. Chain-of-Thought Reasoning Loop
     while (state.steps < MAX_STEPS && !state.isTerminated) {
       state.steps++;
 
       // Contextual Reasoning Phase
-      const reasoningPrompt = await bp_hooks.applyFilters('reasoning_engine', "Processing neural hook context...", [state, contextId], contextId);
+      const reasoningPrompt = await bp_hooks.applyFilters('reasoning_engine', "Processing neural hook context...", { state, contextId });
       
       // 3. Tool Discovery & Execution
-      // Standard signature passing: data=null, args=[state, contextId]
-      const toolRequest = await bp_hooks.applyFilters('discover_tool_call', null, [state, contextId], contextId);
+      // Standard signature passing: data=null, args={ state, contextId }
+      const toolRequest = await bp_hooks.applyFilters('discover_tool_call', null, { state, contextId });
 
       if (toolRequest && !state.isTerminated) {
-        await bp_hooks.doAction('before_tool_call', [{ state, toolRequest }], contextId);
+        await bp_hooks.doAction('before_tool_call', { state, toolRequest });
         
         const toolResult = await executeTool(toolRequest.name, toolRequest.args, contextId);
         
@@ -74,20 +74,20 @@ export async function runIntelligenceLoop(input: string, initialState: Partial<I
           metadata: { tool: toolRequest.name, status: toolResult.status } 
         });
         
-        await bp_hooks.doAction('after_tool_call', [{ state, toolResult }], contextId);
+        await bp_hooks.doAction('after_tool_call', { state, toolResult });
         continue; 
       }
 
       // 4. Final Neural Synthesis
-      const finalOutput = await bp_hooks.applyFilters('post_process_output', reasoningPrompt, [state, contextId], contextId);
+      const finalOutput = await bp_hooks.applyFilters('post_process_output', reasoningPrompt, { state, contextId });
       state.messages.push({ role: 'assistant', content: finalOutput });
       break;
     }
   } catch (error: any) {
-    await bp_hooks.doAction('loop_error', [{ error, state }], contextId);
+    await bp_hooks.doAction('loop_error', { error, state });
     state.messages.push({ role: 'assistant', content: `[Neural Failure] ${error.message}` });
   }
 
-  await bp_hooks.doAction('loop_completed', [state, contextId], contextId);
+  await bp_hooks.doAction('loop_completed', { state, contextId });
   return state;
 }

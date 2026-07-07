@@ -11,7 +11,7 @@ export const MultiAgentPlugin: Plugin = {
       id: 'delegation-logic',
       type: 'filter',
       priority: 20,
-      callback: async (content: string, { state }: any) => {
+      callback: (content: string, { state }: any) => {
         const lastMsg = state.messages[state.messages.length - 1];
         if (lastMsg.role === 'user' && lastMsg.content.includes('@researcher')) {
           return `[Delegated to Researcher] Investigating complex topic: ${lastMsg.content}`;

@@ -17,7 +17,7 @@ export const GuardrailPlugin: Plugin = {
       id: 'safety-interceptor-2.0',
       type: 'filter',
       priority: 1,
-      callback: (input: string, { state }: any, contextId: string) => {
+      callback: async (input: string, { state, contextId }: any) => {
         const forbiddenPatterns = [
           /dangerous/i, /harmful/i, /illegal/i, /bypass/i, /jailbreak/i
         ];
@@ -39,7 +39,7 @@ export const GuardrailPlugin: Plugin = {
       id: 'logic-integrity-check-2.0',
       type: 'filter',
       priority: 100,
-      callback: (content: string, { state }: any, contextId: string) => {
+      callback: async (content: string, { state, contextId }: any) => {
         if (state.isTerminated) return content;
 
         const isLowQuality = content.length < 30 || content.toLowerCase().includes('i don\'t know') || content.includes('[Error]');
@@ -58,7 +58,7 @@ export const GuardrailPlugin: Plugin = {
       id: 'safety-badge',
       type: 'filter',
       priority: 110,
-      callback: (content: string) => {
+      callback: (content: string, { state }: any) => {
         return `${content}\n\n*Verified by BrainPress Safety Infrastructure (Elite Level)*`;
       },
     });

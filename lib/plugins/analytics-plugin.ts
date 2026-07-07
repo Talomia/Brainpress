@@ -15,7 +15,7 @@ export const AnalyticsPlugin: Plugin = {
       id: 'track-stats-production',
       type: 'action',
       priority: 250,
-      callback: async (state: any) => {
+      callback: async ({ state, contextId }: any) => {
         const tokens = state.messages.reduce((acc: number, m: any) => acc + (m.content?.length || 0) / 4, 0);
         const record = {
           loop_id: Math.random().toString(36).substring(7),
@@ -42,7 +42,8 @@ export const AnalyticsPlugin: Plugin = {
       id: 'fetch-analytics-summary',
       type: 'filter',
       priority: 10,
-      callback: async () => {
+      callback: async (data: any, context: any = {}) => {
+        const { state } = context || {};
         try {
           let data = [];
           if (process.env.NEXT_PUBLIC_SUPABASE_URL) {

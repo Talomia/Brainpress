@@ -56,21 +56,25 @@ class HookManager {
     return [...global, ...contextual].sort((a, b) => a.priority - b.priority);
   }
 
-  async doAction(tag: string, args: any[], contextId: string = 'global') {
+  async doAction(tag: string, context: any = {}, contextId: string = 'global') {
     const hooks = this.getEffectiveHooks(tag, contextId);
+    const safeContext = context || {};
     for (const hook of hooks) {
       if (hook.type === 'action') {
-        await (hook.callback as any)(...args);
+        // Standard Brainpress 2.0 Action Signature: (context: { state, contextId, ... })
+        await (hook.callback as any)({ ...safeContext, contextId });
       }
     }
   }
 
-  async applyFilters(tag: string, data: any, args: any[] = [], contextId: string = 'global'): Promise<any> {
+  async applyFilters(tag: string, data: any, context: any = {}, contextId: string = 'global'): Promise<any> {
     const hooks = this.getEffectiveHooks(tag, contextId);
+    const safeContext = context || {};
     let filteredData = data;
     for (const hook of hooks) {
       if (hook.type === 'filter') {
-        filteredData = await (hook.callback as any)(filteredData, ...args);
+        // Standard Brainpress 2.0 Filter Signature: (data, context: { state, contextId, ... })
+        filteredData = await (hook.callback as any)(filteredData, { ...safeContext, contextId });
       }
     }
     return filteredData;
